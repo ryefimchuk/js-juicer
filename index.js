@@ -37,7 +37,7 @@ function getWrappedCode(code, globalReferenceDictionary, excludedGlobalReference
     return wrappedCode + explicitlySafeCodeInvocation;
 }
 
-export function squeeze(code, options = {}) {
+function squeeze(code, options = {}) {
 
     if (!options.excludedGlobalReferenceNames) {
 
@@ -76,11 +76,19 @@ export function squeeze(code, options = {}) {
 
     const wrappedCode = getWrappedCode(code, globalReferenceDictionary, options.excludedGlobalReferenceNames);
     const output = UglifyJS.minify(wrappedCode, options.uglifyJSOptions);
-    const outputCode = output.code;
+
+    if (output.error) {
+
+        return {
+            error: output.error
+        };
+    }
 
     return {
-        code: outputCode,
-        inputCodeSize: inputSize,
-        outputSize: Buffer.byteLength(outputCode, 'utf8')
+        code: output.code,
+        inputSize: inputSize,
+        outputSize: Buffer.byteLength(output.code, 'utf8')
     };
 }
+
+exports.squeeze = squeeze;

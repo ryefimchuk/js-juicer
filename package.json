@@ -1,7 +1,7 @@
 {
   "name": "js-juicer",
-  "version": "1.0.0",
-  "description": "JS Juicer is a small JavaScript library for extra code compression",
+  "version": "1.0.1",
+  "description": "JS Juicer is a small JavaScript library for extra code compression with UglifyJS",
   "homepage": "https://github.com/ryefimchuk/js-juicer",
   "main": "index.js",
   "directories": {
@@ -35,6 +35,7 @@
     "packer",
     "uglifier",
     "uglify",
+    "uglifyjs",
     "compress",
     "compressor"
   ]
