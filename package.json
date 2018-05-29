@@ -1,8 +1,8 @@
 {
-  "name": "js_juicer",
+  "name": "js-juicer",
   "version": "1.0.0",
   "description": "JS Juicer is a small JavaScript library for extra code compression",
-  "homepage": "https://github.com/ryefimchuk/js_juicer",
+  "homepage": "https://github.com/ryefimchuk/js-juicer",
   "main": "index.js",
   "directories": {
     "lib": "lib"
@@ -19,6 +19,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ryefimchuk/js_juicer.git"
+    "url": "https://github.com/ryefimchuk/js-juicer.git"
   }
 }
