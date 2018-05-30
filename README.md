@@ -1,79 +1,85 @@
-
-
-# js-juicer
-
-> JS Juicer is a small JavaScript library for extra code compression with UglifyJS
-
-## Installation
-
-Install package with NPM and add it to your development dependencies:
-
-`npm install js-juicer --save-dev`
-
-## Usage
-
-```javascript
-const jsJuicer = require('js-juicer');
-const jsCode = `
-   function sendForm() {
-
-       const firstName = document.getElementById('first-name');
-       const lastName = document.getElementById('last-name');
-       const age = parseInt(document.getElementById('age').value, 10);
-       const length = parseInt(document.getElementById('length').value, 10);
-
-       if (FormUtils.isFirstNameValid(firstName)) {
-
-           alert('Please enter first name');
-           return;
-       }
-
-       if (FormUtils.isLastNameValid(lastName)) {
-
-           alert('Please enter last name');
-           return;
-       }
-
-       if (FormUtils.isAgeValid(age)) {
-
-           alert('Please enter age');
-           return;
-       }
-
-       if (FormUtils.isLengthValid(length)) {
-
-           alert('Please enter length');
-           return;
-       }
-
-       return FormUtils.sendForm({
-           firstName: firstName,
-           lastName: lastName,
-           age: age,
-           length: length
-     });
+  
+  
+# js-juicer  
+  
+> JS Juicer is a small JavaScript library for extra code compression with UglifyJS  
+  
+## Installation  
+  
+Install package with NPM and add it to your development dependencies:  
+  
+`npm install js-juicer --save-dev`  
+  
+## Usage  
+  
+```javascript  
+const jsJuicer = require('js-juicer');  
+const jsCode = `  
+   function sendForm() {  
+  
+       var firstName = document.getElementById('first-name');
+       var lastName = document.getElementById('last-name');
+       var age = parseInt(document.getElementById('age').value, 10);
+       var length = parseInt(document.getElementById('length').value, 10);
+  
+       if (FormUtils.isFirstNameValid(firstName)) {  
+  
+           alert('Please enter first name');  
+           return;  
+       }  
+  
+       if (FormUtils.isLastNameValid(lastName)) {  
+  
+           alert('Please enter last name');  
+           return;  
+       }  
+  
+       if (FormUtils.isAgeValid(age)) {  
+  
+           alert('Please enter age');  
+           return;  
+       }  
+  
+       if (FormUtils.isLengthValid(length)) {  
+  
+           alert('Please enter length');  
+           return;  
+       }  
+  
+       return FormUtils.sendForm({  
+           firstName: firstName,  
+           lastName: lastName,  
+           age: age,  
+           length: length  
+     });  
    }
-`;
-const output = jsJuicer.squeeze(jsCode, {
-   excludedGlobalReferenceNames: [/* list of excluded globar reference names, for example 'window', 'Object' or 'Zone' */],
-   uglifyJSOptions: { /* uglifyJS options */ }
-});
 
-console.log(output.code);
-/*
-   should be next:
-   !function(l,n,i,m){!function(){var e=i.getElementById("first-name"),t=i.getElementById("last-name"),a=m(i.getElementById("age").value,10),s=m(i.getElementById("length").value,10);if(l.isFirstNameValid(e))n("Please enter first name");else if(l.isLastNameValid(t))n("Please enter last name");else if(l.isAgeValid(a))n("Please enter age");else{if(!l.isLengthValid(s))return l.sendForm({firstName:e,lastName:t,age:a,length:s});n("Please enter length")}}()}(this.FormUtils,this.alert,this.document,this.parseInt);
-*/
-```
+   sendForm();
+`;  
+const output = jsJuicer.squeeze(jsCode, { /* options */ });
+  
+console.log(output.code);  
+/*  
+   should be next:  
+   !function(l,n,i,m){!function(){var e=l.getElementById("first-name"),t=l.getElementById("last-name"),a=n(l.getElementById("age").value,10),s=n(l.getElementById("length").value,10);if(i.isFirstNameValid(e))m("Please enter first name");else if(i.isLastNameValid(t))m("Please enter last name");else if(i.isAgeValid(a))m("Please enter age");else{if(!i.isLengthValid(s))return i.sendForm({firstName:e,lastName:t,age:a,length:s});m("Please enter length")}}()}(this.document,this.parseInt,this.FormUtils,this.alert);
 
-## Options
-
-- `excludedGlobalReferenceNames` (default `[]`) -- Pass list of global reference names which shouldn't be passed to wrapped code (for example if some global references have deferred initialization)
-- `uglifyJSOptions` (default `{}`) -- [minify options](https://github.com/mishoo/UglifyJS2#minify-options) from the UglifyJS API.
-
-## Output
-
-- `code` - minified code
-- `inputSize` - size in bytes for input code
-- `outputSize` - size in bytes for output code
+   for example pure uglifyJS minification
+   function sendForm(){var e=document.getElementById("first-name"),t=document.getElementById("last-name"),a=parseInt(document.getElementById("age").value,10),l=parseInt(document.getElementById("length").value,10);if(FormUtils.isFirstNameValid(e))alert("Please enter first name");else if(FormUtils.isLastNameValid(t))alert("Please enter last name");else if(FormUtils.isAgeValid(a))alert("Please enter age");else{if(!FormUtils.isLengthValid(l))return FormUtils.sendForm({firstName:e,lastName:t,age:a,length:l});alert("Please enter length")}}sendForm();
+*/  
+```  
+  
+## Options  
+  
+- `uglifyJSOptions` (default `{}`) -- [minify options](https://github.com/mishoo/UglifyJS2#minify-options) from the UglifyJS API
+- `returnMangledNames` (default `false`) -- if enable will return all original mangled global reference names
+- `mangleReadwriteVariables` (default `false`)  -- if enabled then global reference name in the assignment will be mangled
+- `excludedNames` (default `[]`) -- List of global reference names which shouldn't be mangled (for example if some global references have deferred initialization) 
+- `minRepeatCount` (default `2`) -- min number of repeats for reference name
+- `minNameLength` (default `2`) -- min name length
+  
+## Output  
+  
+- `code` - minified code  
+- `inputSize` - size in bytes for input code  
+- `outputSize` - size in bytes for output code  
 - `error` - error object for unsuccessful operation
