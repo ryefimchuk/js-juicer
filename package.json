@@ -3,6 +3,7 @@
   "version": "1.0.1",
   "description": "JS Juicer is a small JavaScript library for extra code compression with UglifyJS",
   "homepage": "https://github.com/ryefimchuk/js-juicer",
+  "bugs": "https://github.com/ryefimchuk/js-juicer/issues",
   "main": "index.js",
   "directories": {
     "lib": "lib"
