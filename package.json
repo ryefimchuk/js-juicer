@@ -7,7 +7,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "mocha",
+    "test": "npm run build & mocha",
     "prepublish": "npm run build"
   },
   "author": "Roman Yefimchuk <ryefimchuk@gmail.com>",

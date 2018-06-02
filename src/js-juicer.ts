@@ -45,40 +45,14 @@ function getWrappedCode(code: string, globalReferenceNames: string[]): string {
     return iifeBody + explicitlySafeCodeInvocation;
 }
 
-export function squeeze(code: string, options: JsJuicerOptions): JsJuicerOutput {
-
-    if (!options) {
-
-        options = {
-            uglifyJSOptions: {},
-            returnMangledNames: false,
-            mangleReadwriteVariables: false,
-            excludedNames: [],
-            minRepeatCount: 2,
-            minNameLength: 2
-        };
-    } else {
-
-        if (!options.uglifyJSOptions) {
-
-            options.uglifyJSOptions = {};
-        }
-
-        if (!options.excludedNames) {
-
-            options.excludedNames = [];
-        }
-
-        if (!options.minRepeatCount || options.minRepeatCount < 0) {
-
-            options.minRepeatCount = 2;
-        }
-
-        if (!options.minNameLength || options.minNameLength < 0) {
-
-            options.minNameLength = 2;
-        }
-    }
+export function squeeze(code: string, {
+    uglifyJSOptions = {},
+    returnMangledNames = false,
+    mangleReadwriteVariables = false,
+    excludedNames = [],
+    minRepeatCount = 2,
+    minNameLength = 2
+}: JsJuicerOptions = {}): JsJuicerOutput {
 
     const inputSize = Buffer.byteLength(code, 'utf8');
     const ast = esprima.parseScript(code);
@@ -92,7 +66,7 @@ export function squeeze(code: string, options: JsJuicerOptions): JsJuicerOutput 
         const identifier = reference.identifier;
         const name = identifier.name;
 
-        if (!options.mangleReadwriteVariables) {
+        if (!mangleReadwriteVariables) {
 
             if (globalScope.implicit.variables.findIndex((variable: any) => {
                     return variable.name === name
@@ -102,7 +76,7 @@ export function squeeze(code: string, options: JsJuicerOptions): JsJuicerOutput 
             }
         }
 
-        if (name.length >= options.minNameLength) {
+        if (name.length >= minNameLength) {
 
             if (globalReferenceDictionary[name]) {
 
@@ -120,14 +94,14 @@ export function squeeze(code: string, options: JsJuicerOptions): JsJuicerOutput 
 
             const references = globalReferenceDictionary[referenceName];
 
-            if (references.length >= options.minRepeatCount && options.excludedNames.indexOf(referenceName) === -1) {
+            if (references.length >= minRepeatCount && excludedNames.indexOf(referenceName) === -1) {
 
                 oftenUsedGlobalReferenceNames.push(referenceName);
             }
         });
 
     const wrappedCode: string = getWrappedCode(code, oftenUsedGlobalReferenceNames);
-    const output = UglifyJS.minify(wrappedCode, options.uglifyJSOptions);
+    const output = UglifyJS.minify(wrappedCode, uglifyJSOptions);
 
     if (output.error) {
 
@@ -136,7 +110,7 @@ export function squeeze(code: string, options: JsJuicerOptions): JsJuicerOutput 
         };
     }
 
-    if (options.returnMangledNames) {
+    if (returnMangledNames) {
 
         return {
             code: output.code,
