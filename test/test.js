@@ -26,7 +26,7 @@ var code3 = '' +
 
 describe('jsJuice', function () {
 
-    var jsJuice = require('./../index');
+    var jsJuice = require('./../dist/js-juicer');
 
     it('should load module', function () {
 

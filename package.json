@@ -1,15 +1,14 @@
 {
-  "name": "js-juicer",
-  "version": "1.0.2",
+  "name": "@ryefimchuk/js-juicer",
+  "version": "1.0.0",
   "description": "JS Juicer is a small JavaScript library for extra code compression with UglifyJS",
   "homepage": "https://github.com/ryefimchuk/js-juicer",
   "bugs": "https://github.com/ryefimchuk/js-juicer/issues",
-  "main": "index.js",
-  "directories": {
-    "lib": "lib"
-  },
+  "main": "dist/index.js",
   "scripts": {
-    "test": "mocha"
+    "build": "tsc",
+    "test": "mocha",
+    "prepublish": "npm run build"
   },
   "author": "Roman Yefimchuk <ryefimchuk@gmail.com>",
   "license": "MIT",
@@ -41,6 +40,11 @@
     "uglify-js": "^3.3.27"
   },
   "devDependencies": {
-    "mocha": "^5.2.0"
-  }
+    "@types/esprima": "^4.0.2",
+    "@types/node": "^10.3.0",
+    "@types/uglify-js": "^3.0.2",
+    "mocha": "^5.2.0",
+    "typescript": "^2.9.1"
+  },
+  "types": "dist/index.d.ts"
 }
