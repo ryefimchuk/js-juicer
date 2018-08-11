@@ -1,28 +1,40 @@
 import * as JsJuicer from '../src';
 
-const code1 = '' +
-  'var a = parseInt(prompt("Enter a:"));' +
-  'var b = parseInt(prompt("Enter b:"));' +
-  'alert(a + b);' +
-  '';
+const code1 = `
+  var a = parseInt(prompt("Enter a:"));
+  var b = parseInt(prompt("Enter b:"));
+  alert(a + b);
+  `;
 
-const code2 = '' +
-  'globalVar = prompt("some text 1");' +
-  'if (Math.random() > 0.5) {' +
-  '   globalVar = prompt("some text 2");' +
-  '}' +
-  'window.globalVar = globalVar' +
-  '';
+const code2 = `
+  globalVar = prompt("some text 1");
+  if (Math.random() > 0.5) {
+    globalVar = prompt("some text 2");
+  }
+  window.globalVar = globalVar;
+  `;
 
-const code3 = '' +
-  'text = prompt("some text 1");' +
-  'if (Math.random() > 0.5) {' +
-  '   text = prompt("some text 2");' +
-  '} else {' +
-  '   text = prompt("some text 3");' +
-  '}' +
-  'window.text = text' +
-  '';
+const code3 = `
+  text = prompt("some text 1");
+  if (Math.random() > 0.5) {
+    text = prompt("some text 2");
+  } else {
+    text = prompt("some text 3");
+  }
+  window.text = text;
+  `;
+
+const code4 = `
+  var text = getText();
+  if (text === undefined) {
+    text = getTextAgain();
+    if (text === undefined){
+      window.a = function() {
+        return getText() !== undefined;
+      };
+    }
+  }
+`;
 
 describe('JsJuicer', (): void => {
 
@@ -40,9 +52,7 @@ describe('JsJuicer', (): void => {
 
   test('should return mangled global reference names', (): void => {
 
-    const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code1, {
-      returnMangledNames: true
-    });
+    const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code1);
 
     expect('' + output.mangledGlobalReferenceNames === 'parseInt,prompt').toBeTruthy();
   });
@@ -50,8 +60,7 @@ describe('JsJuicer', (): void => {
   test('should exclude parseInt function', (): void => {
 
     const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code1, {
-      excludedNames: ['parseInt'],
-      returnMangledNames: true
+      excludedNames: ['parseInt']
     });
 
     expect(output.code === '!function(t){var r=parseInt(t("Enter a:")),n=parseInt(t("Enter b:"));alert(r+n)}(this.prompt);' && '' + output.mangledGlobalReferenceNames === 'prompt').toBeTruthy();
@@ -60,8 +69,7 @@ describe('JsJuicer', (): void => {
   test('should mangle global readwrite variable', (): void => {
 
     const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code2, {
-      mangleReadwriteVariables: true,
-      returnMangledNames: true
+      mangleReadwriteVariables: true
     });
 
     expect(
@@ -72,9 +80,7 @@ describe('JsJuicer', (): void => {
 
   test('should not mangle global readwrite variable', (): void => {
 
-    const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code2, {
-      returnMangledNames: true
-    });
+    const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code2);
 
     expect(
       output.code === '!function(a){globalVar=a("some text 1"),.5<Math.random()&&(globalVar=a("some text 2")),window.globalVar=globalVar}(this.prompt);' &&
@@ -86,7 +92,6 @@ describe('JsJuicer', (): void => {
 
     const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code3, {
       mangleReadwriteVariables: true,
-      returnMangledNames: true,
       minRepeatCount: 4
     });
 
@@ -99,7 +104,6 @@ describe('JsJuicer', (): void => {
   test('should mangle reference name with min length 5 (prompt)', (): void => {
 
     const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code3, {
-      returnMangledNames: true,
       minNameLength: 5
     });
 
@@ -114,5 +118,21 @@ describe('JsJuicer', (): void => {
     const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze('a(()');
 
     expect(output.error).toBeDefined();
+  });
+
+  test('should mangle undefined reference', (): void => {
+
+    const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(code4);
+
+    expect(
+      output.code === '!function(t,i,n){n()===t&&getTextAgain()===t&&(window.a=function(){return n()!==t})}(void 0,this.text,this.getText);' && output.mangledGlobalReferenceNames.indexOf('undefined') !== -1
+    ).toBeTruthy();
+  });
+
+  test('should mangle with default options', (): void => {
+
+    const output: JsJuicer.JsJuicerOutput = JsJuicer.squeeze(`alert('Hello, world!')`, {});
+
+    expect(output.code).toBeDefined();
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "js-juicer",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "JS Juicer is a small JavaScript library for extra code compression with UglifyJS",
   "homepage": "https://github.com/ryefimchuk/js-juicer",
   "bugs": "https://github.com/ryefimchuk/js-juicer/issues",
@@ -16,7 +16,7 @@
     "prebuild": "rimraf dist",
     "build": "tsc --module commonjs && rollup -c rollup.config.js",
     "precommit": "npm run lint && lint-staged",
-    "test": "jest",
+    "test": "rimraf dist && jest",
     "test:watch": "jest --watch",
     "test:prod": "npm run lint && npm run test -- --coverage --no-cache",
     "prepublish": "npm run build"

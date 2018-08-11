@@ -1,13 +1,11 @@
 import * as UglifyJS from 'uglify-js';
-import {MinifyOptions} from 'uglify-js';
 import * as esprima from 'esprima';
 
 const escope = require('escope');
 
 export interface JsJuicerOptions {
 
-  minifyOptions?: MinifyOptions;
-  returnMangledNames?: boolean;
+  minifyOptions?: UglifyJS.MinifyOptions;
   mangleReadwriteVariables?: boolean;
   excludedNames?: string[];
   minRepeatCount?: number;
@@ -17,29 +15,58 @@ export interface JsJuicerOptions {
 export interface JsJuicerOutput {
 
   code?: string;
+  minifyOutput?: UglifyJS.MinifyOutput;
   mangledGlobalReferenceNames?: string[];
-  inputLength?: number;
-  outputLength?: number;
   error?: any;
 }
 
+function hasUndefined(globalReferenceNames: string[]): boolean {
+  return globalReferenceNames.indexOf('undefined') !== -1;
+}
+
+function withoutUndefined(globalReferenceNames: string[]): string[] {
+  return globalReferenceNames.filter((globalReferenceName: string): boolean => globalReferenceName !== 'undefined');
+}
+
+function getIIFEBody(code: string, globalReferenceNames: string[]): string {
+
+  if (hasUndefined(globalReferenceNames)) {
+
+    return `(function(undefined,${withoutUndefined(globalReferenceNames).join(',')}){${code}})`;
+  }
+
+  return `(function(${globalReferenceNames.join(',')}){${code}})`;
+}
+
 function getImplicitlySafeCodeInvocation(globalReferenceNames: string[]): string {
+
+  if (hasUndefined(globalReferenceNames)) {
+
+    return `.apply(this,void 0,"${withoutUndefined(globalReferenceNames).join(',')}".split(",").map(function(k){return this[k]}))`;
+  }
+
   return `.apply(this,"${globalReferenceNames.join(',')}".split(",").map(function(k){return this[k]}))`;
 }
 
 function getExplicitlySafeCodeInvocation(globalReferenceNames: string[]): string {
+
+  if (hasUndefined(globalReferenceNames)) {
+
+    return `(void 0,${withoutUndefined(globalReferenceNames).map((globalReferenceName: string): string => `this.${globalReferenceName}`).join(',')})`;
+  }
+
   return `(${globalReferenceNames.map((globalReferenceName: string): string => `this.${globalReferenceName}`).join(',')})`;
 }
 
 function getWrappedCode(code: string, globalReferenceNames: string[]): string {
 
-  const iifeBody: string = `(function(${globalReferenceNames.join(',')}){${code}})`;
+  const iifeBody: string = getIIFEBody(code, globalReferenceNames);
   const implicitlySafeCodeInvocation: string = getImplicitlySafeCodeInvocation(globalReferenceNames);
   const explicitlySafeCodeInvocation: string = getExplicitlySafeCodeInvocation(globalReferenceNames);
 
+  /* istanbul ignore next */
   if (implicitlySafeCodeInvocation.length < explicitlySafeCodeInvocation.length) {
 
-    /* istanbul ignore next */
     return iifeBody + implicitlySafeCodeInvocation;
   }
 
@@ -48,7 +75,6 @@ function getWrappedCode(code: string, globalReferenceNames: string[]): string {
 
 export function squeeze(code: string, {
   minifyOptions = {},
-  returnMangledNames = false,
   mangleReadwriteVariables = false,
   excludedNames = [],
   minRepeatCount = 2,
@@ -57,7 +83,6 @@ export function squeeze(code: string, {
 
   try {
 
-    const inputLength: number = code.length;
     const ast: esprima.Program = esprima.parseScript(code);
     const scopeManager: any = escope.analyze(ast);
     const globalScope: any = scopeManager.globalScope;
@@ -106,28 +131,19 @@ export function squeeze(code: string, {
     const wrappedCode: string = getWrappedCode(code, oftenUsedGlobalReferenceNames);
     const output: UglifyJS.MinifyOutput = UglifyJS.minify(wrappedCode, minifyOptions);
 
+    /* istanbul ignore next */
     if (output.error) {
 
-      /* istanbul ignore next */
       return {
+        minifyOutput: output,
         error: output.error
-      };
-    }
-
-    if (returnMangledNames) {
-
-      return {
-        code: output.code,
-        inputLength: inputLength,
-        outputLength: output.code.length,
-        mangledGlobalReferenceNames: oftenUsedGlobalReferenceNames
       };
     }
 
     return {
       code: output.code,
-      inputLength: inputLength,
-      outputLength: output.code.length
+      minifyOutput: output,
+      mangledGlobalReferenceNames: oftenUsedGlobalReferenceNames
     };
   } catch (e) {
 
