@@ -1,128 +1,138 @@
-import {MinifyOptions} from "uglify-js";
+import * as UglifyJS from 'uglify-js';
+import {MinifyOptions} from 'uglify-js';
+import * as esprima from 'esprima';
 
-const esprima = require('esprima');
 const escope = require('escope');
-const UglifyJS = require('uglify-js');
 
-declare interface JsJuicerOptions {
+export interface JsJuicerOptions {
 
-    uglifyJSOptions?: MinifyOptions;
-    returnMangledNames?: boolean;
-    mangleReadwriteVariables?: boolean;
-    excludedNames?: string[];
-    minRepeatCount?: number;
-    minNameLength?: number;
+  minifyOptions?: MinifyOptions;
+  returnMangledNames?: boolean;
+  mangleReadwriteVariables?: boolean;
+  excludedNames?: string[];
+  minRepeatCount?: number;
+  minNameLength?: number;
 }
 
-declare interface JsJuicerOutput {
+export interface JsJuicerOutput {
 
-    code?: string;
-    mangledGlobalReferenceNames?: string[];
-    inputSize?: number;
-    outputSize?: number;
-    error?: any;
+  code?: string;
+  mangledGlobalReferenceNames?: string[];
+  inputLength?: number;
+  outputLength?: number;
+  error?: any;
 }
 
 function getImplicitlySafeCodeInvocation(globalReferenceNames: string[]): string {
-    return '.apply(this,"' + globalReferenceNames.join(',') + '".split(",").map(function(k){return this[k]}))';
+  return `.apply(this,"${globalReferenceNames.join(',')}".split(",").map(function(k){return this[k]}))`;
 }
 
 function getExplicitlySafeCodeInvocation(globalReferenceNames: string[]): string {
-    return '(' + globalReferenceNames.map((globalReferenceName: string): string => 'this.' + globalReferenceName).join(',') + ')';
+  return `(${globalReferenceNames.map((globalReferenceName: string): string => `this.${globalReferenceName}`).join(',')})`;
 }
 
 function getWrappedCode(code: string, globalReferenceNames: string[]): string {
 
-    const iifeBody: string = '(function(' + globalReferenceNames.join(',') + '){' + code + '})';
-    const implicitlySafeCodeInvocation: string = getImplicitlySafeCodeInvocation(globalReferenceNames);
-    const explicitlySafeCodeInvocation: string = getExplicitlySafeCodeInvocation(globalReferenceNames);
+  const iifeBody: string = `(function(${globalReferenceNames.join(',')}){${code}})`;
+  const implicitlySafeCodeInvocation: string = getImplicitlySafeCodeInvocation(globalReferenceNames);
+  const explicitlySafeCodeInvocation: string = getExplicitlySafeCodeInvocation(globalReferenceNames);
 
-    if (implicitlySafeCodeInvocation.length < explicitlySafeCodeInvocation.length) {
+  if (implicitlySafeCodeInvocation.length < explicitlySafeCodeInvocation.length) {
 
-        return iifeBody + implicitlySafeCodeInvocation;
-    }
+    /* istanbul ignore next */
+    return iifeBody + implicitlySafeCodeInvocation;
+  }
 
-    return iifeBody + explicitlySafeCodeInvocation;
+  return iifeBody + explicitlySafeCodeInvocation;
 }
 
 export function squeeze(code: string, {
-    uglifyJSOptions = {},
-    returnMangledNames = false,
-    mangleReadwriteVariables = false,
-    excludedNames = [],
-    minRepeatCount = 2,
-    minNameLength = 2
+  minifyOptions = {},
+  returnMangledNames = false,
+  mangleReadwriteVariables = false,
+  excludedNames = [],
+  minRepeatCount = 2,
+  minNameLength = 2
 }: JsJuicerOptions = {}): JsJuicerOutput {
 
-    const inputSize = Buffer.byteLength(code, 'utf8');
-    const ast = esprima.parseScript(code);
-    const scopeManager = escope.analyze(ast);
-    const globalScope = scopeManager.globalScope;
-    const globalReferenceDictionary: any = {};
+  try {
+
+    const inputLength: number = code.length;
+    const ast: esprima.Program = esprima.parseScript(code);
+    const scopeManager: any = escope.analyze(ast);
+    const globalScope: any = scopeManager.globalScope;
+    const globalReferenceDictionary: { [key: string]: any } = {};
     const oftenUsedGlobalReferenceNames: any[] = [];
 
-    globalScope.implicit.left.forEach((reference: any) => {
+    globalScope.implicit.left.forEach((reference: any): void => {
 
-        const identifier = reference.identifier;
-        const name = identifier.name;
+      const identifier = reference.identifier;
+      const name = identifier.name;
 
-        if (!mangleReadwriteVariables) {
+      if (!mangleReadwriteVariables) {
 
-            if (globalScope.implicit.variables.findIndex((variable: any) => {
-                    return variable.name === name
-                }) !== -1) {
+        if (globalScope.implicit.variables.findIndex((variable: any) => {
+          return variable.name === name;
+        }) !== -1) {
 
-                return;
-            }
+          return;
         }
+      }
 
-        if (name.length >= minNameLength) {
+      if (name.length >= minNameLength) {
 
-            if (globalReferenceDictionary[name]) {
+        if (globalReferenceDictionary[name]) {
 
-                globalReferenceDictionary[name].push(reference);
-            } else {
+          globalReferenceDictionary[name].push(reference);
+        } else {
 
-                globalReferenceDictionary[name] = [reference];
-            }
+          globalReferenceDictionary[name] = [reference];
         }
+      }
     });
 
     Object
-        .keys(globalReferenceDictionary)
-        .forEach((referenceName: string): void => {
+      .keys(globalReferenceDictionary)
+      .forEach((referenceName: string): void => {
 
-            const references = globalReferenceDictionary[referenceName];
+        const references = globalReferenceDictionary[referenceName];
 
-            if (references.length >= minRepeatCount && excludedNames.indexOf(referenceName) === -1) {
+        if (references.length >= minRepeatCount && excludedNames.indexOf(referenceName) === -1) {
 
-                oftenUsedGlobalReferenceNames.push(referenceName);
-            }
-        });
+          oftenUsedGlobalReferenceNames.push(referenceName);
+        }
+      });
 
     const wrappedCode: string = getWrappedCode(code, oftenUsedGlobalReferenceNames);
-    const output = UglifyJS.minify(wrappedCode, uglifyJSOptions);
+    const output: UglifyJS.MinifyOutput = UglifyJS.minify(wrappedCode, minifyOptions);
 
     if (output.error) {
 
-        return {
-            error: output.error
-        };
+      /* istanbul ignore next */
+      return {
+        error: output.error
+      };
     }
 
     if (returnMangledNames) {
 
-        return {
-            code: output.code,
-            inputSize: inputSize,
-            outputSize: Buffer.byteLength(output.code, 'utf8'),
-            mangledGlobalReferenceNames: oftenUsedGlobalReferenceNames
-        };
+      return {
+        code: output.code,
+        inputLength: inputLength,
+        outputLength: output.code.length,
+        mangledGlobalReferenceNames: oftenUsedGlobalReferenceNames
+      };
     }
 
     return {
-        code: output.code,
-        inputSize: inputSize,
-        outputSize: Buffer.byteLength(output.code, 'utf8')
+      code: output.code,
+      inputLength: inputLength,
+      outputLength: output.code.length
     };
+  } catch (e) {
+
+    return {
+      error: e
+    };
+  }
 }
