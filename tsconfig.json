@@ -1,0 +1,22 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "target": "es5",
+    "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "outDir": "./dist/lib",
+    "declarationDir": "./dist/types",
+    "sourceMap": true,
+    "declaration": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
+  },
+  "include": [
+    "./src"
+  ]
+}

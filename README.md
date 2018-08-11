@@ -70,7 +70,7 @@ console.log(output.code);
   
 ## Options  
   
-- `uglifyJSOptions` (default `{}`) -- [minify options](https://github.com/mishoo/UglifyJS2#minify-options) from the UglifyJS API
+- `minifyOptions` (default `{}`) -- [minify options](https://github.com/mishoo/UglifyJS2#minify-options) from the UglifyJS API
 - `returnMangledNames` (default `false`) -- if enable will return all original mangled global reference names
 - `mangleReadwriteVariables` (default `false`)  -- if enabled then global reference name in the assignment will be mangled
 - `excludedNames` (default `[]`) -- List of global reference names which shouldn't be mangled (for example if some global references have deferred initialization) 
@@ -80,6 +80,6 @@ console.log(output.code);
 ## Output  
   
 - `code` - minified code  
-- `inputSize` - size in bytes for input code  
-- `outputSize` - size in bytes for output code  
+- `inputLength` - length for input code  
+- `outputLength` - length output code  
 - `error` - error object for unsuccessful operation
